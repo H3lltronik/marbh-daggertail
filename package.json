@@ -11,13 +11,16 @@
     "zip": "node zip-lambdas.js",
     "terraform:apply:prod": "cd terraform && terraform apply -auto-approve -var-file=prod.tfvars",
     "terraform:destroy:prod": "cd terraform && terraform destroy -auto-approve -var-file=prod.tfvars",
-    "deploy:aws": "npm run build && npm run zip && npm run terraform:apply:prod"
+    "terraform:apply:dev": "cd terraform && terraform apply -auto-approve -var-file=localstack.tfvars",
+    "terraform:destroy:dev": "cd terraform && terraform destroy -auto-approve -var-file=localstack.tfvars",
+    "deploy:aws": "npm run build && npm run zip && npm run terraform:apply:prod",
+    "deploy:local": "npm run build && npm run zip && npm run terraform:apply:dev"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.450.0",
     "@aws-sdk/client-sqs": "^3.450.0",
-    "mime-types": "^2.1.35",
-    "uuid": "^11.1.0"
+    "@faker-js/faker": "^9.6.0",
+    "mime-types": "^2.1.35"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.126",

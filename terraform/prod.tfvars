@@ -13,9 +13,9 @@ perm_bucket_name     = "marbh-perm-bucket-prod"
 # URLs de webhooks a través de ngrok
 # Estos valores deben actualizarse con tu URL de ngrok actual
 # Ejemplo: ejecuta ngrok en tu localhost y reemplaza estas URLs
-webhook_validate_phase    = "https://0c4b-201-151-220-189.ngrok-free.app/api/webhooks/files/update-status"
+webhook_validate_phase    = "https://0c4b-201-151-220-189.ngrok-free.app/api/webhooks/files/complete-processing"
 webhook_checklist_data    = "https://0c4b-201-151-220-189.ngrok-free.app/api/webhooks/assignation-uploaded-files"
-webhook_validation_success = "https://0c4b-201-151-220-189.ngrok-free.app/api/webhooks/files/update-status"
+webhook_validation_success = "https://0c4b-201-151-220-189.ngrok-free.app/api/webhooks/files/complete-processing"
 webhook_validation_error  = "https://0c4b-201-151-220-189.ngrok-free.app/api/webhooks/files/validation-error"
 
 # Clave API para el checklist (actualizar con tu clave para producción)

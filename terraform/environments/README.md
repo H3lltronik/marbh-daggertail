@@ -76,7 +76,7 @@ Cada cliente necesita su propio conjunto de variables en los archivos `.tfvars`.
 - **Endpoints de webhooks**: URL específicas del cliente
   ```hcl
   webhook_checklist_data = "https://api.cliente-nuevo.com/webhooks/assignation-uploaded-files"
-  webhook_validation_success = "https://api.cliente-nuevo.com/webhooks/files/update-status"
+  webhook_validation_success = "https://api.cliente-nuevo.com/webhooks/files/complete-processing"
   webhook_validation_error = "https://api.cliente-nuevo.com/webhooks/files/validation-error"
   ```
 

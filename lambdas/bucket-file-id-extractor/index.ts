@@ -31,9 +31,7 @@ async function processS3Record(
   queueUrl: string
 ): Promise<void> {
   const sourceBucket = record.s3.bucket.name;
-  const sourceKey = decodeURIComponent(
-    record.s3.object.key.replaceAll("+", " "),
-  );
+  const sourceKey = decodeURIComponent(record.s3.object.key.replace(/\+/g, " "));
   const fileName = sourceKey.split("/").pop() ?? sourceKey;
 
   const regex = /.*-\{([^}]+)\}\.[^.]+$/;

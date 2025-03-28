@@ -41,12 +41,7 @@ async function processRecord(
     }
   }
 
-  // Extract UUID from the filename
-  const uuidMatch = objectInfo.key.match(/.*-\{([^}]+)\}\.[^.]+$/);
-  if (!uuidMatch) {
-    throw new InvalidFileFormatException(objectInfo.key);
-  }
-  const uuid = uuidMatch[1];
+  const uuid = validationResult.metadata.uuid;
 
   try {
     // Prepare and send the appropriate payload based on validation result

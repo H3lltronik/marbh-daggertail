@@ -13,7 +13,7 @@ variable "perm_bucket_name" {
 variable "webhook_validate_phase" {
   description = "URL for the validation phase webhook"
   type        = string
-  default     = "http://host.docker.internal:5555/api/webhooks/files/update-status"
+  default     = "http://host.docker.internal:5555/api/webhooks/files/complete-processing"
 }
 
 variable "webhook_checklist_data" {
@@ -31,7 +31,7 @@ variable "checklist_api_key" {
 variable "webhook_validation_success" {
   description = "URL for the webhook endpoint to notify successful validations"
   type        = string
-  default     = "http://host.docker.internal:5555/api/webhooks/files/update-status"
+  default     = "http://host.docker.internal:5555/api/webhooks/files/complete-processing"
 }
 
 variable "webhook_validation_error" {

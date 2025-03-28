@@ -1,0 +1,42 @@
+services:
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      - SERVICES=s3,lambda,logs,iam,sqs,apigateway
+      - DEBUG=1
+      - LAMBDA_EXECUTOR=local
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=us-east-1
+      - HOSTNAME_EXTERNAL=localhost
+      - PERSISTENCE=1
+      - DISABLE_CORS_CHECKS=1
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # k6:
+  #   image: ghcr.io/grafana/xk6-dashboard:0.7.2
+  #   container_name: k6
+  #   volumes:
+  #     - ./tests/performance:/tests/performance
+  #     - ./k6-results:/home/k6
+  #   ports:
+  #     - "5665:5665"
+  #   environment:
+  #     BASE_URL: "http://host.docker.internal:3000"
+  #     K6_WEB_DASHBOARD_EXPORT: "report.html"
+  #     K6_WEB_DASHBOARD_PERIOD: "1s"
+  #     K6_WEB_DASHBOARD_OPEN: "true"
+  #   command: [
+  #     "run",
+  #     "--out", "web-dashboard",
+  #     "/tests/performance/contexts/users/get-users.mjs"
+  #   ]

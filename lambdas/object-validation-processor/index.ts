@@ -16,8 +16,7 @@ import {
   FileValidationException,
 } from "../../core/shared/exceptions";
 
-import { lookup } from "mime-types";
-import { v4 as uuidv4 } from "uuid";
+import { faker } from "@faker-js/faker";
 
 // Initialize services
 const logger = new Logger("ObjectValidationProcessor");
@@ -89,14 +88,33 @@ async function validateFileSize(context: ValidationContext): Promise<ValidationC
 async function validateMimeType(context: ValidationContext): Promise<ValidationCheck> {
   const { objectInfo, metadata } = context;
   
-  if (!objectInfo.contentType || metadata.checklistItem.allowedMimeTypes.length === 0) {
+  if (!objectInfo.contentType) {
     return {
       name: "mimeType",
       passed: false,
-      because: "Could not determine content type or no allowed types specified",
+      because: "Could not determine content type",
     };
   }
 
+  // If no allowed types are specified or the array is empty, fail validation
+  if (!metadata.checklistItem.allowedMimeTypes || metadata.checklistItem.allowedMimeTypes.length === 0) {
+    return {
+      name: "mimeType",
+      passed: false,
+      because: "No allowed MIME types specified",
+    };
+  }
+
+  // Check if wildcard "*" is included, which allows all MIME types
+  if (metadata.checklistItem.allowedMimeTypes.includes("*")) {
+    return {
+      name: "mimeType",
+      passed: true,
+      because: `File type accepted: ${objectInfo.contentType} (all types allowed)`,
+    };
+  }
+
+  // Normal validation for specific MIME types
   const isValid = metadata.checklistItem.allowedMimeTypes.includes(objectInfo.contentType);
 
   return {
@@ -185,8 +203,11 @@ async function processRecord(
         const fileName = keyParts.pop() || '';
         const pathPrefix = keyParts.length > 0 ? `${keyParts.join('/')}/` : '';
         
-        // Generate a new UUID for the filename
-        const newFileName = `${uuidv4()}.${extension}`;
+        // Generate a new filename with a timestamp and random string to ensure uniqueness
+        // Avoid special characters that might cause issues with S3 keys
+        const timestamp = Date.now();
+        const randomString = faker.string.alphanumeric(8); // Use alphanumeric only
+        const newFileName = `file-${timestamp}-${randomString}.${extension}`;
         
         // Create the new key with original path but new filename
         const newKey = `${pathPrefix}${newFileName}`;

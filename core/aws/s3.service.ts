@@ -193,7 +193,7 @@ export class S3Service {
       // 1. Copy the object using CopyObjectCommand
       await this.s3Client.send(
         new CopyObjectCommand({
-          CopySource: `${sourceBucket}/${sourceKey}`,
+          CopySource: encodeURIComponent(`${sourceBucket}/${sourceKey}`),
           Bucket: destinationBucket,
           Key: finalDestinationKey,
         }),

@@ -617,7 +617,7 @@
                   "AWS_LAMBDA_LOG_LEVEL": "DEBUG",
                   "CHECKLIST_API_KEY": "pk_8556260aa34606f6de07784cbcff846e053f4c23c21323d6",
                   "WEBHOOK_VALIDATION_ERROR": "http://host.docker.internal:5555/api/webhooks/files/validation-error",
-                  "WEBHOOK_VALIDATION_SUCCESS": "http://host.docker.internal:5555/api/webhooks/files/update-status"
+                  "WEBHOOK_VALIDATION_SUCCESS": "http://host.docker.internal:5555/api/webhooks/files/complete-processing"
                 }
               }
             ],

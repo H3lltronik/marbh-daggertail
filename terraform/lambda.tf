@@ -53,7 +53,8 @@ resource "aws_iam_policy" "lambda_policy" {
           "${aws_sqs_queue.validation_task_queue.arn}",
           "${aws_sqs_queue.validation_result_queue.arn}",
           "${aws_sqs_queue.validation_dlq.arn}",
-          "${aws_sqs_queue.lambda_dlq.arn}"
+          "${aws_sqs_queue.lambda_dlq.arn}",
+          "${aws_sqs_queue.dlq_processor_dlq.arn}"
         ]
       },
       {
@@ -183,6 +184,30 @@ resource "aws_lambda_function" "validation_result_handler" {
   }
 }
 
+# 5. Configuración para la Lambda dlq-processor
+resource "aws_lambda_function" "dlq_processor" {
+  function_name    = "marbh-dlq-processor"
+  role             = aws_iam_role.lambda_execution_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs18.x"
+  filename         = "../dist/zips/dlq-processor.zip"
+  source_code_hash = filebase64sha256("../dist/zips/dlq-processor.zip")
+  timeout          = 30
+  memory_size      = 128
+
+  environment {
+    variables = {
+      AWS_LAMBDA_LOG_LEVEL = "DEBUG",
+      CHECKLIST_API_KEY = var.checklist_api_key,
+      VALIDATION_RESULT_QUEUE_URL = aws_sqs_queue.validation_result_queue.url
+    }
+  }
+  
+  dead_letter_config {
+    target_arn = aws_sqs_queue.dlq_processor_dlq.arn
+  }
+}
+
 # Trigger de S3 para invocar la Lambda bucket-file-id-extractor
 resource "aws_s3_bucket_notification" "bucket_notification" {
   bucket = aws_s3_bucket.temp_bucket.id
@@ -211,5 +236,12 @@ resource "aws_lambda_event_source_mapping" "validation_task_mapping" {
 resource "aws_lambda_event_source_mapping" "validation_result_mapping" {
   event_source_arn = aws_sqs_queue.validation_result_queue.arn
   function_name    = aws_lambda_function.validation_result_handler.arn
+  batch_size       = 1
+}
+
+# Mapping SQS validation_dlq -> dlq_processor Lambda
+resource "aws_lambda_event_source_mapping" "validation_dlq_mapping" {
+  event_source_arn = aws_sqs_queue.validation_dlq.arn
+  function_name    = aws_lambda_function.dlq_processor.arn
   batch_size       = 1
 } 

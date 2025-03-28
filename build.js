@@ -1,14 +1,7 @@
 import { build } from 'esbuild';
 import fs from 'node:fs';
 import path from 'node:path';
-
-// Lista de las lambdas que queremos compilar
-const lambdas = [
-  'bucket-file-id-extractor',
-  'new-object-validation-gatherer',
-  'object-validation-processor',
-  'validation-result-handler'
-];
+import { lambdas } from './lambdas/config.js';
 
 // Función auxiliar para asegurar que un directorio existe
 function ensureDirectoryExists(dirPath) {

@@ -1,14 +1,7 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-
-// Lista de las lambdas que queremos empaquetar
-const lambdas = [
-  "bucket-file-id-extractor",
-  "new-object-validation-gatherer",
-  "object-validation-processor",
-  "validation-result-handler",
-];
+import { lambdas } from "./lambdas/config.js";
 
 // Función principal
 const main = () => {

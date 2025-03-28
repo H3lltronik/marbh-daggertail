@@ -49,4 +49,12 @@ export class SQSOperationException extends LambdaBaseException {
       `Failed to perform SQS ${operation}: ${error instanceof Error ? error.message : error}`,
     );
   }
+}
+
+export class DLQProcessingException extends LambdaBaseException {
+  constructor(stage: string, error: Error | string) {
+    super(
+      `Failed to process DLQ message from stage ${stage}: ${error instanceof Error ? error.message : error}`,
+    );
+  }
 } 

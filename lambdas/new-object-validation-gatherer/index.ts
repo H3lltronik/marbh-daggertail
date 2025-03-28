@@ -5,6 +5,7 @@ import { ChecklistApiService } from "../../core/integrations/checklist-api.servi
 import { Logger } from "../../core/shared/logger";
 import {
   FileIdExtractionMessageBody,
+  ProcessingStage,
   ValidationMessageBody,
 } from "../../core/shared/types";
 import {
@@ -28,37 +29,62 @@ async function processRecord(
 ): Promise<void> {
   logger.log(`Processing SQS message: ${record.messageId}`);
 
-  // Parse the message body
+  // Parse the message body from the previous step (bucket-file-id-extractor)
   const messageBody: FileIdExtractionMessageBody = JSON.parse(
     record.body,
   ) as FileIdExtractionMessageBody;
 
-  const { objectInfo, uploadedAssignationFileId } = messageBody;
+  const { objectInfo: tempFileInfo, uploadedAssignationFileId, finalFileName } = messageBody;
 
   logger.log(
-    `Processing file ID: ${uploadedAssignationFileId} for object: ${objectInfo.key}`,
+    `Processing file ID: ${uploadedAssignationFileId} for temp file: ${tempFileInfo.key}`,
   );
+  
+  if (finalFileName) {
+    logger.log(`Target final file name: ${finalFileName}`);
+  }
 
-  // Retrieve checklist metadata
+  // Retrieve checklist metadata using the extracted assignation file ID
   try {
-    const metadata = await checklistApiService.getAssignationFileMetadata(
+    const checklistMetadata = await checklistApiService.getAssignationFileMetadata(
       uploadedAssignationFileId,
     );
 
-    logger.log(`Retrieved metadata for ID: ${uploadedAssignationFileId}`);
+    logger.log(`Retrieved checklist metadata for ID: ${uploadedAssignationFileId}`);
 
-    // Create SQS message with object info and metadata
+    // Create SQS message with temp file info, desired filename and checklist metadata
     const validationMessageBody: ValidationMessageBody = {
-      name: objectInfo.name,
-      objectInfo,
-      metadata,
+      name: tempFileInfo.name,
+      objectInfo: tempFileInfo,  // Still a reference to the temp file at this point
+      metadata: checklistMetadata,
+      finalFileName,  // The desired final filename for the permanent storage
+    };
+
+    // Add metadata as message attributes to help with DLQ processing
+    const messageAttributes = {
+      processingStage: {
+        DataType: "String",
+        StringValue: ProcessingStage.VALIDATION_GATHERING
+      },
+      assignationId: {
+        DataType: "String",
+        StringValue: uploadedAssignationFileId
+      },
+      originalMessageId: {
+        DataType: "String",
+        StringValue: record.messageId
+      },
+      timestamp: {
+        DataType: "String",
+        StringValue: new Date().toISOString()
+      }
     };
 
     // Send message to validation queue
     logger.log(`Sending message to validation queue: ${validationQueueUrl}`);
-    await sqsService.sendMessage(validationQueueUrl, validationMessageBody);
+    await sqsService.sendMessage(validationQueueUrl, validationMessageBody, messageAttributes);
 
-    logger.log(`Successfully queued ${objectInfo.name} for validation`);
+    logger.log(`Successfully queued ${tempFileInfo.name} for validation`);
   } catch (error) {
     logger.error(`Error processing ${uploadedAssignationFileId}: ${error instanceof Error ? error.message : String(error)}`);
     if (error instanceof Error) {

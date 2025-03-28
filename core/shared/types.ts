@@ -19,6 +19,28 @@ export interface WebhookPayload {
   processedAt: string;
 }
 
+// Dead Letter Queue processing types
+export enum ProcessingStage {
+  FILE_ID_EXTRACTION = "file_id_extraction",
+  VALIDATION_GATHERING = "validation_gathering",
+  VALIDATION_PROCESSING = "validation_processing",
+  VALIDATION_RESULT = "validation_result"
+}
+
+export interface DLQMessageMetadata {
+  stage: ProcessingStage;
+  errorType: string;
+  errorMessage: string;
+  retryCount: number;
+  originalMessageId?: string;
+  timestamp: string;
+}
+
+export interface DLQMessageBody extends SQSMessageBody {
+  metadata: DLQMessageMetadata;
+  originalMessage: string; // Stringified original message
+}
+
 // New types for the validation process
 
 export interface ChecklistItem {
@@ -58,11 +80,13 @@ export interface ValidationResult {
 // Mensaje inicial con la referencia del objeto S3 y el ID extraído del nombre de archivo
 export interface FileIdExtractionMessageBody extends SQSMessageBody {
   uploadedAssignationFileId: string;
+  finalFileName: string;
 }
 
 // Mensaje con los metadatos del checklist para validación
 export interface ValidationMessageBody extends SQSMessageBody {
   metadata: ChecklistItemMetadata;
+  finalFileName?: string;
 }
 
 // Mensaje con el resultado de la validación

@@ -2,12 +2,13 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.0"
+      version = "~> 5.0"
     }
   }
 }
 
-# Variables para configuración del provider
+# ===== Provider Configuration Variables =====
+
 variable "use_localstack" {
   description = "Set to true to use LocalStack instead of AWS"
   type        = bool
@@ -20,7 +21,56 @@ variable "aws_profile" {
   default     = "default"
 }
 
-# AWS Provider Configuration
+# ===== Business Variables =====
+
+variable "customer" {
+  description = "Nombre del cliente"
+  type        = string
+  default     = "guerrero-santana"
+}
+
+variable "product" {
+  description = "Nombre del producto"
+  type        = string
+  default     = "checklist-system"
+}
+
+variable "default_cognito_user_email" {
+  description = "Email del usuario por defecto en Cognito"
+  type        = string
+  default     = "admin@example.com"
+}
+
+variable "default_cognito_user_password" {
+  description = "Contraseña del usuario por defecto en Cognito"
+  type        = string
+  default     = "ChangeMe123!"
+  sensitive   = true
+}
+
+# ===== Local Variables =====
+
+# Resource naming based on customer and environment
+locals {
+  # If we're in the default workspace, use the customer variable
+  # Otherwise, use the workspace name as the customer name
+  customer_name = terraform.workspace == "default" ? var.customer : terraform.workspace
+  
+  # Environment indicator (dev/prod or empty for production)
+  env_suffix = var.use_localstack ? "-dev" : ""
+  
+  # Resource naming
+  bucket_temp_name = "marbh-temp-bucket${local.env_suffix}-${local.customer_name}"
+  bucket_perm_name = "marbh-perm-bucket${local.env_suffix}-${local.customer_name}"
+  user_name = "user-checklist-${local.customer_name}"
+  policy_name = "policy-checklist-${local.customer_name}"
+  userpool_name = "userpool-checklist-${local.customer_name}"
+  client_name = "client-checklist-${local.customer_name}"
+}
+
+# ===== AWS Provider Configuration =====
+
+# Main AWS Provider - Can use LocalStack or real AWS
 provider "aws" {
   region                      = "us-east-1"
   profile                     = var.use_localstack ? null : var.aws_profile

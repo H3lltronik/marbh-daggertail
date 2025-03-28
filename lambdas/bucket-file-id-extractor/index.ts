@@ -1,74 +1,10 @@
 import { S3Event } from "aws-lambda";
-import { lookup } from "mime-types";
-
-import { S3Service } from "../../core/aws/s3.service";
-import { SQSService } from "../../core/aws/sqs.service";
 import { Logger } from "../../core/shared/logger";
-import {
-  FileIdExtractionMessageBody,
-  S3ObjectInfo,
-} from "../../core/shared/types";
-import {
-  InvalidFileFormatException,
-  MissingEnvironmentVariableException,
-  SQSOperationException,
-} from "../../core/shared/exceptions";
+import { MissingEnvironmentVariableException } from "../../core/shared/exceptions";
+import { processS3Record } from "./record-processor";
 
-// Initialize services
+// Initialize logger
 const logger = new Logger("BucketFileIdExtractor");
-const s3Service = new S3Service({
-  isLocal: process.env.IS_LOCAL === "true" || process.env.NODE_ENV === "development",
-});
-const sqsService = new SQSService({ 
-  isLocal: process.env.IS_LOCAL === "true" || process.env.NODE_ENV === "development"
-});
-
-/**
- * Process a single S3 record
- */
-async function processS3Record(
-  record: S3Event["Records"][0],
-  queueUrl: string
-): Promise<void> {
-  const sourceBucket = record.s3.bucket.name;
-  const sourceKey = decodeURIComponent(record.s3.object.key.replace(/\+/g, " "));
-  const fileName = sourceKey.split("/").pop() ?? sourceKey;
-
-  const regex = /.*-\{([^}]+)\}\.[^.]+$/;
-  const match = fileName.match(regex);
-
-  if (!match?.[1]) {
-    throw new InvalidFileFormatException(fileName);
-  }
-
-  const mimeType = (lookup(fileName) ?? "invalid") as string;
-
-  const uploadedAssignationFileId = match[1];
-  const objectInfo: S3ObjectInfo = {
-    name: fileName,
-    bucket: sourceBucket,
-    key: sourceKey,
-    size: record.s3.object.size,
-    etag: record.s3.object.eTag,
-    contentType: mimeType,
-  };
-
-  const messageBody: FileIdExtractionMessageBody = {
-    name: fileName,
-    objectInfo,
-    uploadedAssignationFileId,
-  };
-
-  try {
-    await sqsService.sendMessage(queueUrl, messageBody);
-    logger.log(`Processed ${fileName}`);
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new SQSOperationException("send", error);
-    }
-    throw new SQSOperationException("send", String(error));
-  }
-}
 
 /**
  * Lambda handler - Triggered when an object is created in the temporary bucket

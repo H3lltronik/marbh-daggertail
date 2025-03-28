@@ -8,6 +8,7 @@ import {
   ValidationResult,
   ValidationResultMessageBody,
   ValidationCheck,
+  ProcessingStage,
 } from "../../core/shared/types";
 import {
   MissingEnvironmentVariableException,
@@ -136,32 +137,32 @@ async function processRecord(
 ): Promise<void> {
   logger.log(`Processing SQS message: ${record.messageId}`);
 
-  // Parse the message body
+  // Parse the message body from the validation gatherer step
   const messageBody: ValidationMessageBody = JSON.parse(
     record.body,
   ) as ValidationMessageBody;
-  const { objectInfo, metadata } = messageBody;
+  const { objectInfo: tempFileInfo, metadata: checklistMetadata, finalFileName } = messageBody;
 
   logger.log(
-    `Validating object: ${objectInfo.key} against checklist item: ${metadata.checklistItem.title}`,
+    `Validating temp file: ${tempFileInfo.key} against checklist item: ${checklistMetadata.checklistItem.title}`,
   );
 
   try {
-    // Get detailed object information
+    // Get detailed object information about the temp file
     const { ContentLength } = await s3Service.getObjectMetadata(
-      objectInfo.bucket,
-      objectInfo.key,
+      tempFileInfo.bucket,
+      tempFileInfo.key,
     );
 
     // Prepare validation context
     const maxSizeBytes = calculateMaxSizeBytes(
-      metadata.checklistItem.maxSize,
-      metadata.checklistItem.sizeSuffix,
+      checklistMetadata.checklistItem.maxSize,
+      checklistMetadata.checklistItem.sizeSuffix,
     );
 
     const context: ValidationContext = {
-      objectInfo,
-      metadata,
+      objectInfo: tempFileInfo,
+      metadata: checklistMetadata,
       contentLength: ContentLength,
       maxSizeBytes,
     };
@@ -182,51 +183,68 @@ async function processRecord(
       errors: validationChecks
         .filter((check: ValidationCheck) => !check.passed)
         .map((check: ValidationCheck) => check.because),
-      objectInfo,
-      metadata,
-      contentType: objectInfo.contentType,
+      objectInfo: tempFileInfo,
+      metadata: checklistMetadata,
+      contentType: tempFileInfo.contentType,
       validationChecks,
     };
+
+    // Track this to update if the file is moved successfully
+    let finalFileInfo = { ...tempFileInfo };
 
     // If valid, move the object to the permanent bucket
     if (isValid) {
       logger.log(
-        `Object ${objectInfo.key} passed validation. Moving to permanent bucket.`,
+        `Temp file ${tempFileInfo.key} passed validation. Moving to permanent bucket.`,
       );
 
       try {
-        // Get file extension from the original name
-        const extension = objectInfo.name.split('.').pop() || '';
-        
         // Extract the path structure (folders) from the key, excluding the filename
-        const keyParts = objectInfo.key.split('/');
-        const fileName = keyParts.pop() || '';
+        const keyParts = tempFileInfo.key.split('/');
+        keyParts.pop(); // Remove the current filename
         const pathPrefix = keyParts.length > 0 ? `${keyParts.join('/')}/` : '';
         
-        // Generate a new filename with a timestamp and random string to ensure uniqueness
-        // Avoid special characters that might cause issues with S3 keys
-        const timestamp = Date.now();
-        const randomString = faker.string.alphanumeric(8); // Use alphanumeric only
-        const newFileName = `file-${timestamp}-${randomString}.${extension}`;
+        // Use the finalFileName from the input message if available, or generate a random name
+        let permanentFileName;
         
-        // Create the new key with original path but new filename
-        const newKey = `${pathPrefix}${newFileName}`;
+        if (finalFileName) {
+          permanentFileName = finalFileName;
+          logger.log(`Using provided final name: ${permanentFileName}`);
+        } else {
+          // Fallback to the original random name generation
+          const extension = tempFileInfo.name.split('.').pop() || '';
+          const timestamp = Date.now();
+          const randomString = faker.string.alphanumeric(8);
+          permanentFileName = `file-${timestamp}-${randomString}.${extension}`;
+          logger.log(`Generated random file name: ${permanentFileName}`);
+        }
+        
+        // Create the new key with original path but permanent filename
+        const permanentKey = `${pathPrefix}${permanentFileName}`;
 
-        // Move the object with the new key
+        // Move the object from temp to permanent bucket
         await s3Service.moveToBucket(
-          objectInfo.bucket,
-          objectInfo.key,
+          tempFileInfo.bucket,
+          tempFileInfo.key,
           targetBucket,
-          newKey
+          permanentKey
         );
 
-        // Update object info to reflect its new location and name
-        objectInfo.key = newKey;
-        objectInfo.name = newFileName;
-        objectInfo.bucket = targetBucket;
+        // Update object info to reflect its new permanent location
+        finalFileInfo = {
+          name: permanentFileName,
+          key: permanentKey,
+          bucket: targetBucket,
+          size: tempFileInfo.size,
+          etag: tempFileInfo.etag,
+          contentType: tempFileInfo.contentType,
+        };
+        
+        // Update the validation result to use the permanent file info
+        validationResult.objectInfo = finalFileInfo;
         
         logger.log(
-          `Successfully moved object ${objectInfo.key} to permanent bucket ${targetBucket}`,
+          `Successfully moved temp file to permanent location: ${finalFileInfo.key}`,
         );
       } catch (moveError) {
         if (moveError instanceof Error) {
@@ -236,22 +254,43 @@ async function processRecord(
       }
     } else {
       logger.warn(
-        `Object ${objectInfo.key} failed validation with errors: ${validationResult.errors.join("; ")}`,
+        `Temp file ${tempFileInfo.key} failed validation with errors: ${validationResult.errors.join("; ")}`,
       );
     }
 
     // Send message with validation result
     const resultMessageBody: ValidationResultMessageBody = {
-      name: objectInfo.name,
-      objectInfo,
-      metadata,
+      name: finalFileInfo.name,
+      objectInfo: finalFileInfo,
+      metadata: checklistMetadata,
       validationResult,
+      finalFileName,
     };
 
     try {
+      // Add metadata as message attributes to help with DLQ processing
+      const messageAttributes = {
+        processingStage: {
+          DataType: "String",
+          StringValue: ProcessingStage.VALIDATION_PROCESSING
+        },
+        validationStatus: {
+          DataType: "String",
+          StringValue: validationResult.isValid ? "valid" : "invalid"
+        },
+        originalMessageId: {
+          DataType: "String",
+          StringValue: record.messageId
+        },
+        timestamp: {
+          DataType: "String",
+          StringValue: new Date().toISOString()
+        }
+      };
+      
       logger.log(`Sending validation result to queue: ${resultQueueUrl}`);
-      await sqsService.sendMessage(resultQueueUrl, resultMessageBody);
-      logger.log(`Validation complete for object: ${objectInfo.key}`);
+      await sqsService.sendMessage(resultQueueUrl, resultMessageBody, messageAttributes);
+      logger.log(`Validation complete for ${isValid ? 'permanent' : 'temp'} file: ${finalFileInfo.key}`);
     } catch (error) {
       if (error instanceof Error) {
         throw new SQSOperationException("send", error);
@@ -260,7 +299,7 @@ async function processRecord(
     }
   } catch (error) {
     logger.error(
-      `Error processing object ${objectInfo.key}: ${
+      `Error processing temp file ${tempFileInfo.key}: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
@@ -269,11 +308,11 @@ async function processRecord(
         throw error;
       }
       throw new FileValidationException(
-        `Error validating file ${objectInfo.key}: ${error.message}`
+        `Error validating file ${tempFileInfo.key}: ${error.message}`
       );
     }
     throw new FileValidationException(
-      `Error validating file ${objectInfo.key}: ${String(error)}`
+      `Error validating file ${tempFileInfo.key}: ${String(error)}`
     );
   }
 }

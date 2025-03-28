@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "jest",
     "zip": "node zip-lambdas.js",
+    "list-lambdas": "node list-lambdas.js",
     "terraform:apply:prod": "cd terraform && terraform apply -auto-approve -var-file=prod.tfvars",
     "terraform:destroy:prod": "cd terraform && terraform destroy -auto-approve -var-file=prod.tfvars",
     "terraform:apply:dev": "cd terraform && terraform apply -auto-approve -var-file=localstack.tfvars",

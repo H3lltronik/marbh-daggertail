@@ -1,82 +1,10 @@
 import { SQSEvent } from "aws-lambda";
-
-import { WebhookService } from "../../core/integrations/webhook.service";
 import { Logger } from "../../core/shared/logger";
-import { ValidationResultMessageBody } from "../../core/shared/types";
-import {
-  InvalidFileFormatException,
-  MissingEnvironmentVariableException,
-  WebhookException,
-} from "../../core/shared/exceptions";
+import { MissingEnvironmentVariableException } from "../../core/shared/exceptions";
+import { processRecord } from "./message-processor";
 
-// Initialize services
+// Initialize logger
 const logger = new Logger("ValidationResultHandler");
-const webhookService = new WebhookService();
-
-/**
- * Process a single SQS record
- */
-async function processRecord(
-  record: SQSEvent["Records"][0],
-  webhookSuccessUrl: string,
-  webhookErrorUrl: string,
-): Promise<void> {
-  logger.log(`Processing SQS message: ${record.messageId}`);
-
-  // Parse the message body
-  const messageBody: ValidationResultMessageBody = JSON.parse(record.body) as ValidationResultMessageBody;
-  const { objectInfo, validationResult } = messageBody;
-
-  logger.log(`Handling validation result for object: ${objectInfo.key}`);
-  logger.log(
-    `Validation result: ${validationResult.isValid ? "PASSED" : "FAILED"}`,
-  );
-
-  if (!validationResult.isValid) {
-    logger.warn(`Validation errors: ${validationResult.errors.join("; ")}`);
-    
-    // Log detailed validation checks for debugging
-    for (const check of validationResult.validationChecks) {
-      logger.debug(`Validation check - ${check.name}: ${check.because}`);
-    }
-  }
-
-  const uuid = validationResult.metadata.uuid;
-
-  try {
-    // Prepare and send the appropriate payload based on validation result
-    if (validationResult.isValid) {
-      const successPayload = {
-        uuid,
-        name: objectInfo.name,
-        url: `https://${objectInfo.bucket}.s3.amazonaws.com/${objectInfo.key}`,
-        size: objectInfo.size,
-        mimetype: validationResult.contentType,
-      };
-
-      logger.log(`Sending success webhook to: ${webhookSuccessUrl}`);
-      await webhookService.sendWebhook(webhookSuccessUrl, successPayload);
-    } else {
-      const errorPayload = {
-        uuid,
-        error: validationResult.errors.join("; "),
-        validationDetails: validationResult.validationChecks
-          .filter(check => !check.passed)
-          .map(check => check.because),
-      };
-
-      logger.log(`Sending error webhook to: ${webhookErrorUrl}`);
-      await webhookService.sendWebhook(webhookErrorUrl, errorPayload);
-    }
-
-    logger.log(`Successfully sent webhook for object: ${objectInfo.key}`);
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new WebhookException(error);
-    }
-    throw new WebhookException(String(error));
-  }
-}
 
 /**
  * Lambda handler - Triggered by an SQS message containing validation results

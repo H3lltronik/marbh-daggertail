@@ -2,6 +2,7 @@ import {
   SendMessageCommand,
   SQSClient,
   SQSServiceException,
+  MessageAttributeValue,
 } from "@aws-sdk/client-sqs";
 
 import { Logger } from "../shared/logger";
@@ -12,6 +13,14 @@ interface SQSServiceConfig {
   isLocal?: boolean;
   accessKeyId?: string;
   secretAccessKey?: string;
+}
+
+export interface SQSMessageAttributes {
+  [key: string]: {
+    DataType: string;
+    StringValue?: string;
+    BinaryValue?: Uint8Array;
+  };
 }
 
 export class SQSService {
@@ -43,17 +52,26 @@ export class SQSService {
     return new SQSClient(clientConfig);
   }
 
-  async sendMessage<T>(queueUrl: string, messageBody: T): Promise<string> {
+  async sendMessage<T>(
+    queueUrl: string, 
+    messageBody: T, 
+    messageAttributes?: SQSMessageAttributes
+  ): Promise<string> {
     try {
       this.logger.log(`Sending message to SQS queue: ${queueUrl}`);
       this.logger.debug(`Message body: ${JSON.stringify(messageBody)}`);
+      
+      if (messageAttributes) {
+        this.logger.debug(`Message attributes: ${JSON.stringify(messageAttributes)}`);
+      }
 
-      const result = await this.sqsClient.send(
-        new SendMessageCommand({
-          QueueUrl: queueUrl,
-          MessageBody: JSON.stringify(messageBody),
-        }),
-      );
+      const command = new SendMessageCommand({
+        QueueUrl: queueUrl,
+        MessageBody: JSON.stringify(messageBody),
+        MessageAttributes: messageAttributes as Record<string, MessageAttributeValue>,
+      });
+
+      const result = await this.sqsClient.send(command);
 
       if (!result.MessageId) {
         throw new Error("Failed to send message to SQS: No MessageId returned");

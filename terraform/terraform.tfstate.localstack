@@ -1,0 +1,1340 @@
+{
+  "version": 4,
+  "terraform_version": "1.10.3",
+  "serial": 130,
+  "lineage": "9d6e10c4-e18f-6c39-748b-df11f7510eef",
+  "outputs": {
+    "bucket_file_id_extractor_lambda_arn": {
+      "value": "arn:aws:lambda:us-east-1:000000000000:function:marbh-bucket-file-id-extractor",
+      "type": "string"
+    },
+    "file_id_extraction_queue_url": {
+      "value": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-file-id-extraction-queue",
+      "type": "string"
+    },
+    "lambda_dlq_url": {
+      "value": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-lambda-dlq",
+      "type": "string"
+    },
+    "lambda_execution_role_arn": {
+      "value": "arn:aws:iam::000000000000:role/marbh-lambda-execution-role",
+      "type": "string"
+    },
+    "main_queue_url": {
+      "value": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-queue",
+      "type": "string"
+    },
+    "new_object_validation_gatherer_lambda_arn": {
+      "value": "arn:aws:lambda:us-east-1:000000000000:function:marbh-new-object-validation-gatherer",
+      "type": "string"
+    },
+    "object_validation_processor_lambda_arn": {
+      "value": "arn:aws:lambda:us-east-1:000000000000:function:marbh-object-validation-processor",
+      "type": "string"
+    },
+    "s3_perm_bucket_arn": {
+      "value": "arn:aws:s3:::marbh-perm-bucket-local",
+      "type": "string"
+    },
+    "s3_perm_bucket_name": {
+      "value": "marbh-perm-bucket-local",
+      "type": "string"
+    },
+    "s3_temp_bucket_arn": {
+      "value": "arn:aws:s3:::marbh-temp-bucket-local",
+      "type": "string"
+    },
+    "s3_temp_bucket_name": {
+      "value": "marbh-temp-bucket-local",
+      "type": "string"
+    },
+    "validation_dlq_url": {
+      "value": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-object-validation-dlq",
+      "type": "string"
+    },
+    "validation_result_handler_lambda_arn": {
+      "value": "arn:aws:lambda:us-east-1:000000000000:function:marbh-validation-result-handler",
+      "type": "string"
+    },
+    "validation_result_queue_url": {
+      "value": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-validation-result-queue",
+      "type": "string"
+    },
+    "validation_task_queue_url": {
+      "value": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-object-validation-queue",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "aws_iam_policy",
+      "name": "lambda_policy",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::000000000000:policy/marbh-lambda-policy",
+            "description": "Policy for Lambda to access S3 and SQS",
+            "id": "arn:aws:iam::000000000000:policy/marbh-lambda-policy",
+            "name": "marbh-lambda-policy",
+            "name_prefix": "",
+            "path": "/",
+            "policy": "{\"Statement\":[{\"Action\":[\"s3:GetObject\",\"s3:PutObject\",\"s3:ListBucket\",\"s3:DeleteObject\"],\"Effect\":\"Allow\",\"Resource\":[\"arn:aws:s3:::marbh-temp-bucket-local\",\"arn:aws:s3:::marbh-temp-bucket-local/*\",\"arn:aws:s3:::marbh-perm-bucket-local\",\"arn:aws:s3:::marbh-perm-bucket-local/*\"]},{\"Action\":[\"sqs:SendMessage\",\"sqs:ReceiveMessage\",\"sqs:DeleteMessage\",\"sqs:GetQueueAttributes\"],\"Effect\":\"Allow\",\"Resource\":[\"arn:aws:sqs:us-east-1:000000000000:marbh-queue\",\"arn:aws:sqs:us-east-1:000000000000:marbh-file-id-extraction-queue\",\"arn:aws:sqs:us-east-1:000000000000:marbh-object-validation-queue\",\"arn:aws:sqs:us-east-1:000000000000:marbh-validation-result-queue\",\"arn:aws:sqs:us-east-1:000000000000:marbh-object-validation-dlq\",\"arn:aws:sqs:us-east-1:000000000000:marbh-lambda-dlq\"]},{\"Action\":[\"logs:CreateLogGroup\",\"logs:CreateLogStream\",\"logs:PutLogEvents\"],\"Effect\":\"Allow\",\"Resource\":\"arn:aws:logs:*:*:*\"}],\"Version\":\"2012-10-17\"}",
+            "policy_id": "ABAOLAQEMG4HX5Y7VPP8Z",
+            "tags": null,
+            "tags_all": {}
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.perm_bucket",
+            "aws_s3_bucket.temp_bucket",
+            "aws_sqs_queue.file_id_extraction_queue",
+            "aws_sqs_queue.lambda_dlq",
+            "aws_sqs_queue.main_queue",
+            "aws_sqs_queue.validation_dlq",
+            "aws_sqs_queue.validation_result_queue",
+            "aws_sqs_queue.validation_task_queue"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "lambda_execution_role",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::000000000000:role/marbh-lambda-execution-role",
+            "assume_role_policy": "{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\"}}],\"Version\":\"2012-10-17\"}",
+            "create_date": "2025-03-27T23:25:47Z",
+            "description": "",
+            "force_detach_policies": false,
+            "id": "marbh-lambda-execution-role",
+            "inline_policy": [],
+            "managed_policy_arns": [],
+            "max_session_duration": 3600,
+            "name": "marbh-lambda-execution-role",
+            "name_prefix": "",
+            "path": "/",
+            "permissions_boundary": null,
+            "role_last_used": [
+              {
+                "last_used_date": "",
+                "region": ""
+              }
+            ],
+            "tags": null,
+            "tags_all": {},
+            "unique_id": "AROAQAAAAAAAESEKRBEU7"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role_policy_attachment",
+      "name": "lambda_policy_attachment",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "marbh-lambda-execution-role-20250327232638694600000001",
+            "policy_arn": "arn:aws:iam::000000000000:policy/marbh-lambda-policy",
+            "role": "marbh-lambda-execution-role"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_policy.lambda_policy",
+            "aws_iam_role.lambda_execution_role",
+            "aws_s3_bucket.perm_bucket",
+            "aws_s3_bucket.temp_bucket",
+            "aws_sqs_queue.file_id_extraction_queue",
+            "aws_sqs_queue.lambda_dlq",
+            "aws_sqs_queue.main_queue",
+            "aws_sqs_queue.validation_dlq",
+            "aws_sqs_queue.validation_result_queue",
+            "aws_sqs_queue.validation_task_queue"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_event_source_mapping",
+      "name": "file_id_extraction_mapping",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "amazon_managed_kafka_event_source_config": [],
+            "batch_size": 1,
+            "bisect_batch_on_function_error": false,
+            "destination_config": [],
+            "document_db_event_source_config": [],
+            "enabled": true,
+            "event_source_arn": "arn:aws:sqs:us-east-1:000000000000:marbh-file-id-extraction-queue",
+            "filter_criteria": [],
+            "function_arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-new-object-validation-gatherer",
+            "function_name": "arn:aws:lambda:us-east-1:000000000000:function:marbh-new-object-validation-gatherer",
+            "function_response_types": null,
+            "id": "e0347bc5-63ea-4853-9a97-58bbe06fea4a",
+            "last_modified": "2025-03-27T23:26:54Z",
+            "last_processing_result": "",
+            "maximum_batching_window_in_seconds": 0,
+            "maximum_record_age_in_seconds": 0,
+            "maximum_retry_attempts": 0,
+            "parallelization_factor": 0,
+            "queues": null,
+            "scaling_config": [],
+            "self_managed_event_source": [],
+            "self_managed_kafka_event_source_config": [],
+            "source_access_configuration": [],
+            "starting_position": "",
+            "starting_position_timestamp": "",
+            "state": "Enabled",
+            "state_transition_reason": "USER_INITIATED",
+            "topics": null,
+            "tumbling_window_in_seconds": 0,
+            "uuid": "e0347bc5-63ea-4853-9a97-58bbe06fea4a"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.lambda_execution_role",
+            "aws_lambda_function.new_object_validation_gatherer",
+            "aws_sqs_queue.file_id_extraction_queue",
+            "aws_sqs_queue.lambda_dlq",
+            "aws_sqs_queue.validation_dlq",
+            "aws_sqs_queue.validation_task_queue"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_event_source_mapping",
+      "name": "validation_result_mapping",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "amazon_managed_kafka_event_source_config": [],
+            "batch_size": 1,
+            "bisect_batch_on_function_error": false,
+            "destination_config": [],
+            "document_db_event_source_config": [],
+            "enabled": true,
+            "event_source_arn": "arn:aws:sqs:us-east-1:000000000000:marbh-validation-result-queue",
+            "filter_criteria": [],
+            "function_arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-validation-result-handler",
+            "function_name": "arn:aws:lambda:us-east-1:000000000000:function:marbh-validation-result-handler",
+            "function_response_types": null,
+            "id": "fe537991-4daa-449b-a6a1-d361c47390e2",
+            "last_modified": "2025-03-27T23:26:38Z",
+            "last_processing_result": "",
+            "maximum_batching_window_in_seconds": 0,
+            "maximum_record_age_in_seconds": 0,
+            "maximum_retry_attempts": 0,
+            "parallelization_factor": 0,
+            "queues": null,
+            "scaling_config": [],
+            "self_managed_event_source": [],
+            "self_managed_kafka_event_source_config": [],
+            "source_access_configuration": [],
+            "starting_position": "",
+            "starting_position_timestamp": "",
+            "state": "Enabled",
+            "state_transition_reason": "USER_INITIATED",
+            "topics": null,
+            "tumbling_window_in_seconds": 0,
+            "uuid": "fe537991-4daa-449b-a6a1-d361c47390e2"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.lambda_execution_role",
+            "aws_lambda_function.validation_result_handler",
+            "aws_sqs_queue.lambda_dlq",
+            "aws_sqs_queue.validation_dlq",
+            "aws_sqs_queue.validation_result_queue"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_event_source_mapping",
+      "name": "validation_task_mapping",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "amazon_managed_kafka_event_source_config": [],
+            "batch_size": 1,
+            "bisect_batch_on_function_error": false,
+            "destination_config": [],
+            "document_db_event_source_config": [],
+            "enabled": true,
+            "event_source_arn": "arn:aws:sqs:us-east-1:000000000000:marbh-object-validation-queue",
+            "filter_criteria": [],
+            "function_arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-object-validation-processor",
+            "function_name": "arn:aws:lambda:us-east-1:000000000000:function:marbh-object-validation-processor",
+            "function_response_types": null,
+            "id": "2f7d3613-4cfe-4049-a373-7baf830875e7",
+            "last_modified": "2025-03-27T23:26:49Z",
+            "last_processing_result": "",
+            "maximum_batching_window_in_seconds": 0,
+            "maximum_record_age_in_seconds": 0,
+            "maximum_retry_attempts": 0,
+            "parallelization_factor": 0,
+            "queues": null,
+            "scaling_config": [],
+            "self_managed_event_source": [],
+            "self_managed_kafka_event_source_config": [],
+            "source_access_configuration": [],
+            "starting_position": "",
+            "starting_position_timestamp": "",
+            "state": "Enabled",
+            "state_transition_reason": "USER_INITIATED",
+            "topics": null,
+            "tumbling_window_in_seconds": 0,
+            "uuid": "2f7d3613-4cfe-4049-a373-7baf830875e7"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.lambda_execution_role",
+            "aws_lambda_function.object_validation_processor",
+            "aws_s3_bucket.perm_bucket",
+            "aws_sqs_queue.lambda_dlq",
+            "aws_sqs_queue.validation_dlq",
+            "aws_sqs_queue.validation_result_queue",
+            "aws_sqs_queue.validation_task_queue"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_function",
+      "name": "bucket_file_id_extractor",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architectures": [
+              "x86_64"
+            ],
+            "arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-bucket-file-id-extractor",
+            "code_signing_config_arn": "",
+            "dead_letter_config": [
+              {
+                "target_arn": "arn:aws:sqs:us-east-1:000000000000:marbh-lambda-dlq"
+              }
+            ],
+            "description": "",
+            "environment": [
+              {
+                "variables": {
+                  "AWS_LAMBDA_LOG_LEVEL": "DEBUG",
+                  "CHECKLIST_API_KEY": "pk_8556260aa34606f6de07784cbcff846e053f4c23c21323d6",
+                  "FILE_ID_EXTRACTION_QUEUE_URL": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-file-id-extraction-queue"
+                }
+              }
+            ],
+            "ephemeral_storage": [
+              {
+                "size": 512
+              }
+            ],
+            "file_system_config": [],
+            "filename": "../dist/zips/bucket-file-id-extractor.zip",
+            "function_name": "marbh-bucket-file-id-extractor",
+            "handler": "index.handler",
+            "id": "marbh-bucket-file-id-extractor",
+            "image_config": [],
+            "image_uri": "",
+            "invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:marbh-bucket-file-id-extractor/invocations",
+            "kms_key_arn": "",
+            "last_modified": "2025-03-27T23:26:38.975715+0000",
+            "layers": null,
+            "memory_size": 128,
+            "package_type": "Zip",
+            "publish": false,
+            "qualified_arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-bucket-file-id-extractor:$LATEST",
+            "qualified_invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:marbh-bucket-file-id-extractor:$LATEST/invocations",
+            "replace_security_groups_on_destroy": null,
+            "replacement_security_group_ids": null,
+            "reserved_concurrent_executions": -1,
+            "role": "arn:aws:iam::000000000000:role/marbh-lambda-execution-role",
+            "runtime": "nodejs18.x",
+            "s3_bucket": null,
+            "s3_key": null,
+            "s3_object_version": null,
+            "signing_job_arn": "",
+            "signing_profile_version_arn": "",
+            "skip_destroy": false,
+            "snap_start": [],
+            "source_code_hash": "eMgsaKTIb8tnsgzPi7ghoeJExk4iT84j2uTBtB2+2o8=",
+            "source_code_size": 62235,
+            "tags": null,
+            "tags_all": {},
+            "timeout": 30,
+            "timeouts": null,
+            "tracing_config": [
+              {
+                "mode": "PassThrough"
+              }
+            ],
+            "version": "$LATEST",
+            "vpc_config": []
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_iam_role.lambda_execution_role",
+            "aws_sqs_queue.file_id_extraction_queue",
+            "aws_sqs_queue.lambda_dlq",
+            "aws_sqs_queue.validation_dlq"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_function",
+      "name": "new_object_validation_gatherer",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architectures": [
+              "x86_64"
+            ],
+            "arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-new-object-validation-gatherer",
+            "code_signing_config_arn": "",
+            "dead_letter_config": [
+              {
+                "target_arn": "arn:aws:sqs:us-east-1:000000000000:marbh-lambda-dlq"
+              }
+            ],
+            "description": "",
+            "environment": [
+              {
+                "variables": {
+                  "AWS_LAMBDA_LOG_LEVEL": "DEBUG",
+                  "CHECKLIST_API_KEY": "pk_8556260aa34606f6de07784cbcff846e053f4c23c21323d6",
+                  "VALIDATION_QUEUE_URL": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-object-validation-queue",
+                  "WEBHOOK_CHECKLIST_DATA": "http://host.docker.internal:5555/api/webhooks/assignation-uploaded-files"
+                }
+              }
+            ],
+            "ephemeral_storage": [
+              {
+                "size": 512
+              }
+            ],
+            "file_system_config": [],
+            "filename": "../dist/zips/new-object-validation-gatherer.zip",
+            "function_name": "marbh-new-object-validation-gatherer",
+            "handler": "index.handler",
+            "id": "marbh-new-object-validation-gatherer",
+            "image_config": [],
+            "image_uri": "",
+            "invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:marbh-new-object-validation-gatherer/invocations",
+            "kms_key_arn": "",
+            "last_modified": "2025-03-27T23:26:49.168943+0000",
+            "layers": null,
+            "memory_size": 256,
+            "package_type": "Zip",
+            "publish": false,
+            "qualified_arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-new-object-validation-gatherer:$LATEST",
+            "qualified_invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:marbh-new-object-validation-gatherer:$LATEST/invocations",
+            "replace_security_groups_on_destroy": null,
+            "replacement_security_group_ids": null,
+            "reserved_concurrent_executions": -1,
+            "role": "arn:aws:iam::000000000000:role/marbh-lambda-execution-role",
+            "runtime": "nodejs18.x",
+            "s3_bucket": null,
+            "s3_key": null,
+            "s3_object_version": null,
+            "signing_job_arn": "",
+            "signing_profile_version_arn": "",
+            "skip_destroy": false,
+            "snap_start": [],
+            "source_code_hash": "6ExDb2RKzFPvX9A4N8jzjCU7+1sEceME1+VF8EWtLJI=",
+            "source_code_size": 7455,
+            "tags": null,
+            "tags_all": {},
+            "timeout": 30,
+            "timeouts": null,
+            "tracing_config": [
+              {
+                "mode": "PassThrough"
+              }
+            ],
+            "version": "$LATEST",
+            "vpc_config": []
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_iam_role.lambda_execution_role",
+            "aws_sqs_queue.lambda_dlq",
+            "aws_sqs_queue.validation_dlq",
+            "aws_sqs_queue.validation_task_queue"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_function",
+      "name": "object_validation_processor",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architectures": [
+              "x86_64"
+            ],
+            "arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-object-validation-processor",
+            "code_signing_config_arn": "",
+            "dead_letter_config": [
+              {
+                "target_arn": "arn:aws:sqs:us-east-1:000000000000:marbh-lambda-dlq"
+              }
+            ],
+            "description": "",
+            "environment": [
+              {
+                "variables": {
+                  "AWS_LAMBDA_LOG_LEVEL": "DEBUG",
+                  "CHECKLIST_API_KEY": "pk_8556260aa34606f6de07784cbcff846e053f4c23c21323d6",
+                  "PERM_BUCKET_NAME": "marbh-perm-bucket-local",
+                  "VALIDATION_RESULT_QUEUE_URL": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-validation-result-queue"
+                }
+              }
+            ],
+            "ephemeral_storage": [
+              {
+                "size": 512
+              }
+            ],
+            "file_system_config": [],
+            "filename": "../dist/zips/object-validation-processor.zip",
+            "function_name": "marbh-object-validation-processor",
+            "handler": "index.handler",
+            "id": "marbh-object-validation-processor",
+            "image_config": [],
+            "image_uri": "",
+            "invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:marbh-object-validation-processor/invocations",
+            "kms_key_arn": "",
+            "last_modified": "2025-03-27T23:26:44.115421+0000",
+            "layers": null,
+            "memory_size": 128,
+            "package_type": "Zip",
+            "publish": false,
+            "qualified_arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-object-validation-processor:$LATEST",
+            "qualified_invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:marbh-object-validation-processor:$LATEST/invocations",
+            "replace_security_groups_on_destroy": null,
+            "replacement_security_group_ids": null,
+            "reserved_concurrent_executions": -1,
+            "role": "arn:aws:iam::000000000000:role/marbh-lambda-execution-role",
+            "runtime": "nodejs18.x",
+            "s3_bucket": null,
+            "s3_key": null,
+            "s3_object_version": null,
+            "signing_job_arn": "",
+            "signing_profile_version_arn": "",
+            "skip_destroy": false,
+            "snap_start": [],
+            "source_code_hash": "X8jjFpPw44/9Lte0pNK379eF43cQEuxKswkNkS6SAZQ=",
+            "source_code_size": 10922,
+            "tags": null,
+            "tags_all": {},
+            "timeout": 30,
+            "timeouts": null,
+            "tracing_config": [
+              {
+                "mode": "PassThrough"
+              }
+            ],
+            "version": "$LATEST",
+            "vpc_config": []
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_iam_role.lambda_execution_role",
+            "aws_s3_bucket.perm_bucket",
+            "aws_sqs_queue.lambda_dlq",
+            "aws_sqs_queue.validation_dlq",
+            "aws_sqs_queue.validation_result_queue"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_function",
+      "name": "validation_result_handler",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architectures": [
+              "x86_64"
+            ],
+            "arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-validation-result-handler",
+            "code_signing_config_arn": "",
+            "dead_letter_config": [
+              {
+                "target_arn": "arn:aws:sqs:us-east-1:000000000000:marbh-lambda-dlq"
+              }
+            ],
+            "description": "",
+            "environment": [
+              {
+                "variables": {
+                  "AWS_LAMBDA_LOG_LEVEL": "DEBUG",
+                  "CHECKLIST_API_KEY": "pk_8556260aa34606f6de07784cbcff846e053f4c23c21323d6",
+                  "WEBHOOK_VALIDATION_ERROR": "http://host.docker.internal:5555/api/webhooks/files/validation-error",
+                  "WEBHOOK_VALIDATION_SUCCESS": "http://host.docker.internal:5555/api/webhooks/files/update-status"
+                }
+              }
+            ],
+            "ephemeral_storage": [
+              {
+                "size": 512
+              }
+            ],
+            "file_system_config": [],
+            "filename": "../dist/zips/validation-result-handler.zip",
+            "function_name": "marbh-validation-result-handler",
+            "handler": "index.handler",
+            "id": "marbh-validation-result-handler",
+            "image_config": [],
+            "image_uri": "",
+            "invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:marbh-validation-result-handler/invocations",
+            "kms_key_arn": "",
+            "last_modified": "2025-03-27T23:26:13.274869+0000",
+            "layers": null,
+            "memory_size": 128,
+            "package_type": "Zip",
+            "publish": false,
+            "qualified_arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-validation-result-handler:$LATEST",
+            "qualified_invoke_arn": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:marbh-validation-result-handler:$LATEST/invocations",
+            "replace_security_groups_on_destroy": null,
+            "replacement_security_group_ids": null,
+            "reserved_concurrent_executions": -1,
+            "role": "arn:aws:iam::000000000000:role/marbh-lambda-execution-role",
+            "runtime": "nodejs18.x",
+            "s3_bucket": null,
+            "s3_key": null,
+            "s3_object_version": null,
+            "signing_job_arn": "",
+            "signing_profile_version_arn": "",
+            "skip_destroy": false,
+            "snap_start": [],
+            "source_code_hash": "n8VtIKqIu/tAptK4dOOqSiQR0bEFxyhE7rWDXcvxPoY=",
+            "source_code_size": 5778,
+            "tags": null,
+            "tags_all": {},
+            "timeout": 30,
+            "timeouts": null,
+            "tracing_config": [
+              {
+                "mode": "PassThrough"
+              }
+            ],
+            "version": "$LATEST",
+            "vpc_config": []
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_iam_role.lambda_execution_role",
+            "aws_sqs_queue.lambda_dlq"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_lambda_permission",
+      "name": "allow_bucket",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "action": "lambda:InvokeFunction",
+            "event_source_token": null,
+            "function_name": "marbh-bucket-file-id-extractor",
+            "function_url_auth_type": null,
+            "id": "AllowExecutionFromS3Bucket",
+            "principal": "s3.amazonaws.com",
+            "principal_org_id": null,
+            "qualifier": "",
+            "source_account": null,
+            "source_arn": "arn:aws:s3:::marbh-temp-bucket-local",
+            "statement_id": "AllowExecutionFromS3Bucket",
+            "statement_id_prefix": ""
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.lambda_execution_role",
+            "aws_lambda_function.bucket_file_id_extractor",
+            "aws_s3_bucket.temp_bucket",
+            "aws_sqs_queue.file_id_extraction_queue",
+            "aws_sqs_queue.lambda_dlq",
+            "aws_sqs_queue.validation_dlq"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket",
+      "name": "perm_bucket",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "acceleration_status": "",
+            "acl": null,
+            "arn": "arn:aws:s3:::marbh-perm-bucket-local",
+            "bucket": "marbh-perm-bucket-local",
+            "bucket_domain_name": "marbh-perm-bucket-local.s3.amazonaws.com",
+            "bucket_prefix": "",
+            "bucket_regional_domain_name": "marbh-perm-bucket-local.s3.amazonaws.com",
+            "cors_rule": [],
+            "force_destroy": true,
+            "grant": [
+              {
+                "id": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a",
+                "permissions": [
+                  "FULL_CONTROL"
+                ],
+                "type": "CanonicalUser",
+                "uri": ""
+              }
+            ],
+            "hosted_zone_id": "Z3AQBSTGFYJSTF",
+            "id": "marbh-perm-bucket-local",
+            "lifecycle_rule": [],
+            "logging": [],
+            "object_lock_configuration": [],
+            "object_lock_enabled": false,
+            "policy": "",
+            "region": "us-east-1",
+            "replication_configuration": [],
+            "request_payer": "BucketOwner",
+            "server_side_encryption_configuration": [
+              {
+                "rule": [
+                  {
+                    "apply_server_side_encryption_by_default": [
+                      {
+                        "kms_master_key_id": "",
+                        "sse_algorithm": "AES256"
+                      }
+                    ],
+                    "bucket_key_enabled": false
+                  }
+                ]
+              }
+            ],
+            "tags": null,
+            "tags_all": {},
+            "timeouts": null,
+            "versioning": [
+              {
+                "enabled": false,
+                "mfa_delete": false
+              }
+            ],
+            "website": [],
+            "website_domain": null,
+            "website_endpoint": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjM2MDAwMDAwMDAwMDAsInJlYWQiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19"
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket",
+      "name": "temp_bucket",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "acceleration_status": "",
+            "acl": null,
+            "arn": "arn:aws:s3:::marbh-temp-bucket-local",
+            "bucket": "marbh-temp-bucket-local",
+            "bucket_domain_name": "marbh-temp-bucket-local.s3.amazonaws.com",
+            "bucket_prefix": "",
+            "bucket_regional_domain_name": "marbh-temp-bucket-local.s3.amazonaws.com",
+            "cors_rule": [],
+            "force_destroy": true,
+            "grant": [
+              {
+                "id": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a",
+                "permissions": [
+                  "FULL_CONTROL"
+                ],
+                "type": "CanonicalUser",
+                "uri": ""
+              }
+            ],
+            "hosted_zone_id": "Z3AQBSTGFYJSTF",
+            "id": "marbh-temp-bucket-local",
+            "lifecycle_rule": [],
+            "logging": [],
+            "object_lock_configuration": [],
+            "object_lock_enabled": false,
+            "policy": "",
+            "region": "us-east-1",
+            "replication_configuration": [],
+            "request_payer": "BucketOwner",
+            "server_side_encryption_configuration": [
+              {
+                "rule": [
+                  {
+                    "apply_server_side_encryption_by_default": [
+                      {
+                        "kms_master_key_id": "",
+                        "sse_algorithm": "AES256"
+                      }
+                    ],
+                    "bucket_key_enabled": false
+                  }
+                ]
+              }
+            ],
+            "tags": null,
+            "tags_all": {},
+            "timeouts": null,
+            "versioning": [
+              {
+                "enabled": false,
+                "mfa_delete": false
+              }
+            ],
+            "website": [],
+            "website_domain": null,
+            "website_endpoint": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjM2MDAwMDAwMDAwMDAsInJlYWQiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19"
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket_acl",
+      "name": "perm_bucket_acl",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "access_control_policy": [
+              {
+                "grant": [
+                  {
+                    "grantee": [
+                      {
+                        "display_name": "webfile",
+                        "email_address": "",
+                        "id": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a",
+                        "type": "CanonicalUser",
+                        "uri": ""
+                      }
+                    ],
+                    "permission": "FULL_CONTROL"
+                  }
+                ],
+                "owner": [
+                  {
+                    "display_name": "webfile",
+                    "id": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a"
+                  }
+                ]
+              }
+            ],
+            "acl": "private",
+            "bucket": "marbh-perm-bucket-local",
+            "expected_bucket_owner": "",
+            "id": "marbh-perm-bucket-local,private"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.perm_bucket",
+            "aws_s3_bucket_ownership_controls.perm_bucket_ownership"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket_acl",
+      "name": "temp_bucket_acl",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "access_control_policy": [
+              {
+                "grant": [
+                  {
+                    "grantee": [
+                      {
+                        "display_name": "webfile",
+                        "email_address": "",
+                        "id": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a",
+                        "type": "CanonicalUser",
+                        "uri": ""
+                      }
+                    ],
+                    "permission": "FULL_CONTROL"
+                  }
+                ],
+                "owner": [
+                  {
+                    "display_name": "webfile",
+                    "id": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a"
+                  }
+                ]
+              }
+            ],
+            "acl": "private",
+            "bucket": "marbh-temp-bucket-local",
+            "expected_bucket_owner": "",
+            "id": "marbh-temp-bucket-local,private"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.temp_bucket",
+            "aws_s3_bucket_ownership_controls.temp_bucket_ownership"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket_cors_configuration",
+      "name": "temp_bucket_cors",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "bucket": "marbh-temp-bucket-local",
+            "cors_rule": [
+              {
+                "allowed_headers": [
+                  "*"
+                ],
+                "allowed_methods": [
+                  "DELETE",
+                  "GET",
+                  "HEAD",
+                  "POST",
+                  "PUT"
+                ],
+                "allowed_origins": [
+                  "http://localhost:5173"
+                ],
+                "expose_headers": [
+                  "ETag"
+                ],
+                "id": "",
+                "max_age_seconds": 3000
+              }
+            ],
+            "expected_bucket_owner": "",
+            "id": "marbh-temp-bucket-local"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.temp_bucket"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket_notification",
+      "name": "bucket_notification",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "bucket": "marbh-temp-bucket-local",
+            "eventbridge": false,
+            "id": "marbh-temp-bucket-local",
+            "lambda_function": [
+              {
+                "events": [
+                  "s3:ObjectCreated:*"
+                ],
+                "filter_prefix": "",
+                "filter_suffix": "",
+                "id": "tf-s3-lambda-20250327232644064700000002",
+                "lambda_function_arn": "arn:aws:lambda:us-east-1:000000000000:function:marbh-bucket-file-id-extractor"
+              }
+            ],
+            "queue": [],
+            "topic": []
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.lambda_execution_role",
+            "aws_lambda_function.bucket_file_id_extractor",
+            "aws_s3_bucket.temp_bucket",
+            "aws_sqs_queue.file_id_extraction_queue",
+            "aws_sqs_queue.lambda_dlq",
+            "aws_sqs_queue.validation_dlq"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket_ownership_controls",
+      "name": "perm_bucket_ownership",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "bucket": "marbh-perm-bucket-local",
+            "id": "marbh-perm-bucket-local",
+            "rule": [
+              {
+                "object_ownership": "BucketOwnerPreferred"
+              }
+            ]
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.perm_bucket"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket_ownership_controls",
+      "name": "temp_bucket_ownership",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "bucket": "marbh-temp-bucket-local",
+            "id": "marbh-temp-bucket-local",
+            "rule": [
+              {
+                "object_ownership": "BucketOwnerPreferred"
+              }
+            ]
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_s3_bucket.temp_bucket"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sqs_queue",
+      "name": "file_id_extraction_queue",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sqs:us-east-1:000000000000:marbh-file-id-extraction-queue",
+            "content_based_deduplication": false,
+            "deduplication_scope": "",
+            "delay_seconds": 0,
+            "fifo_queue": false,
+            "fifo_throughput_limit": "",
+            "id": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-file-id-extraction-queue",
+            "kms_data_key_reuse_period_seconds": 300,
+            "kms_master_key_id": "",
+            "max_message_size": 262144,
+            "message_retention_seconds": 345600,
+            "name": "marbh-file-id-extraction-queue",
+            "name_prefix": "",
+            "policy": "",
+            "receive_wait_time_seconds": 0,
+            "redrive_allow_policy": "",
+            "redrive_policy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:000000000000:marbh-object-validation-dlq\",\"maxReceiveCount\":3}",
+            "sqs_managed_sse_enabled": true,
+            "tags": {
+              "Environment": "dev"
+            },
+            "tags_all": {
+              "Environment": "dev"
+            },
+            "url": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-file-id-extraction-queue",
+            "visibility_timeout_seconds": 30
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_sqs_queue.validation_dlq"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sqs_queue",
+      "name": "lambda_dlq",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sqs:us-east-1:000000000000:marbh-lambda-dlq",
+            "content_based_deduplication": false,
+            "deduplication_scope": "",
+            "delay_seconds": 0,
+            "fifo_queue": false,
+            "fifo_throughput_limit": "",
+            "id": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-lambda-dlq",
+            "kms_data_key_reuse_period_seconds": 300,
+            "kms_master_key_id": "",
+            "max_message_size": 262144,
+            "message_retention_seconds": 345600,
+            "name": "marbh-lambda-dlq",
+            "name_prefix": "",
+            "policy": "",
+            "receive_wait_time_seconds": 0,
+            "redrive_allow_policy": "",
+            "redrive_policy": "",
+            "sqs_managed_sse_enabled": true,
+            "tags": {
+              "Environment": "dev"
+            },
+            "tags_all": {
+              "Environment": "dev"
+            },
+            "url": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-lambda-dlq",
+            "visibility_timeout_seconds": 30
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sqs_queue",
+      "name": "main_queue",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sqs:us-east-1:000000000000:marbh-queue",
+            "content_based_deduplication": false,
+            "deduplication_scope": "",
+            "delay_seconds": 0,
+            "fifo_queue": false,
+            "fifo_throughput_limit": "",
+            "id": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-queue",
+            "kms_data_key_reuse_period_seconds": 300,
+            "kms_master_key_id": "",
+            "max_message_size": 262144,
+            "message_retention_seconds": 345600,
+            "name": "marbh-queue",
+            "name_prefix": "",
+            "policy": "",
+            "receive_wait_time_seconds": 0,
+            "redrive_allow_policy": "",
+            "redrive_policy": "",
+            "sqs_managed_sse_enabled": true,
+            "tags": {
+              "Environment": "dev"
+            },
+            "tags_all": {
+              "Environment": "dev"
+            },
+            "url": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-queue",
+            "visibility_timeout_seconds": 30
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sqs_queue",
+      "name": "validation_dlq",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sqs:us-east-1:000000000000:marbh-object-validation-dlq",
+            "content_based_deduplication": false,
+            "deduplication_scope": "",
+            "delay_seconds": 0,
+            "fifo_queue": false,
+            "fifo_throughput_limit": "",
+            "id": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-object-validation-dlq",
+            "kms_data_key_reuse_period_seconds": 300,
+            "kms_master_key_id": "",
+            "max_message_size": 262144,
+            "message_retention_seconds": 345600,
+            "name": "marbh-object-validation-dlq",
+            "name_prefix": "",
+            "policy": "",
+            "receive_wait_time_seconds": 0,
+            "redrive_allow_policy": "",
+            "redrive_policy": "",
+            "sqs_managed_sse_enabled": true,
+            "tags": {
+              "Environment": "dev"
+            },
+            "tags_all": {
+              "Environment": "dev"
+            },
+            "url": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-object-validation-dlq",
+            "visibility_timeout_seconds": 30
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sqs_queue",
+      "name": "validation_result_queue",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sqs:us-east-1:000000000000:marbh-validation-result-queue",
+            "content_based_deduplication": false,
+            "deduplication_scope": "",
+            "delay_seconds": 0,
+            "fifo_queue": false,
+            "fifo_throughput_limit": "",
+            "id": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-validation-result-queue",
+            "kms_data_key_reuse_period_seconds": 300,
+            "kms_master_key_id": "",
+            "max_message_size": 262144,
+            "message_retention_seconds": 345600,
+            "name": "marbh-validation-result-queue",
+            "name_prefix": "",
+            "policy": "",
+            "receive_wait_time_seconds": 0,
+            "redrive_allow_policy": "",
+            "redrive_policy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:000000000000:marbh-object-validation-dlq\",\"maxReceiveCount\":3}",
+            "sqs_managed_sse_enabled": true,
+            "tags": {
+              "Environment": "dev"
+            },
+            "tags_all": {
+              "Environment": "dev"
+            },
+            "url": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-validation-result-queue",
+            "visibility_timeout_seconds": 30
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_sqs_queue.validation_dlq"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_sqs_queue",
+      "name": "validation_task_queue",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:sqs:us-east-1:000000000000:marbh-object-validation-queue",
+            "content_based_deduplication": false,
+            "deduplication_scope": "",
+            "delay_seconds": 0,
+            "fifo_queue": false,
+            "fifo_throughput_limit": "",
+            "id": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-object-validation-queue",
+            "kms_data_key_reuse_period_seconds": 300,
+            "kms_master_key_id": "",
+            "max_message_size": 262144,
+            "message_retention_seconds": 345600,
+            "name": "marbh-object-validation-queue",
+            "name_prefix": "",
+            "policy": "",
+            "receive_wait_time_seconds": 0,
+            "redrive_allow_policy": "",
+            "redrive_policy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:000000000000:marbh-object-validation-dlq\",\"maxReceiveCount\":3}",
+            "sqs_managed_sse_enabled": true,
+            "tags": {
+              "Environment": "dev"
+            },
+            "tags_all": {
+              "Environment": "dev"
+            },
+            "url": "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/marbh-object-validation-queue",
+            "visibility_timeout_seconds": 30
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_sqs_queue.validation_dlq"
+          ]
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}
